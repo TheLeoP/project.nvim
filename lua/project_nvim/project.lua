@@ -40,6 +40,9 @@ function M.find_pattern_root()
   local curr_dir_cache = {}
 
   local function get_parent(path)
+    if path:match("%a:") then
+      return path
+    end
     path = path:match("^(.*)/")
     if path == "" then
       path = "/"
@@ -176,12 +179,12 @@ function M.set_pwd(dir, method)
 
     if vim.fn.getcwd() ~= dir then
       local scope_chdir = config.options.scope_chdir
-      if scope_chdir == 'global' then
+      if scope_chdir == "global" then
         vim.api.nvim_set_current_dir(dir)
-      elseif scope_chdir == 'tab' then
-        vim.cmd('tcd ' .. dir)
-      elseif scope_chdir == 'win' then
-        vim.cmd('lcd ' .. dir)
+      elseif scope_chdir == "tab" then
+        vim.cmd("tcd " .. dir)
+      elseif scope_chdir == "win" then
+        vim.cmd("lcd " .. dir)
       else
         return
       end
