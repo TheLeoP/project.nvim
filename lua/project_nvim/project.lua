@@ -9,27 +9,34 @@ local M = {}
 M.attached_lsp = false
 M.last_project = nil
 
+--- Tries to return the root of the project using LSP
+---@return string|nil root_dir
+---@return string|nil method
 function M.find_lsp_root()
-  -- Get lsp client for current buffer
   -- Returns nil or string
-  local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
-  local clients = vim.lsp.buf_get_clients()
+  local filetype = vim.api.nvim_buf_get_option(0, "filetype")
+  local clients = vim.lsp.get_active_clients({ bufnr = 0 })
   if next(clients) == nil then
     return nil
   end
 
   for _, client in pairs(clients) do
     local filetypes = client.config.filetypes
-    if filetypes and vim.tbl_contains(filetypes, buf_ft) then
-      if not vim.tbl_contains(config.options.ignore_lsp, client.name) then
-        return client.config.root_dir, client.name
-      end
+    if
+      filetypes
+      and vim.tbl_contains(filetypes, filetype)
+      and not vim.tbl_contains(config.options.ignore_lsp, client.name)
+    then
+      return client.config.root_dir, string.format('"%s" lsp', client.name)
     end
   end
 
   return nil
 end
 
+--- Tries to return the root of the project using pattern matching
+---@return string|nil root_dir
+---@return string|nil method
 function M.find_pattern_root()
   local search_dir = vim.fn.expand("%:p:h", true)
   if vim.fn.has("win32") > 0 then
@@ -145,8 +152,7 @@ function M.find_pattern_root()
   end
 end
 
----@diagnostic disable-next-line: unused-local
-local on_attach_lsp = function(client, bufnr)
+local on_attach_lsp = function()
   M.on_buf_enter() -- Recalculate root dir after lsp attaches
 end
 
@@ -155,64 +161,59 @@ function M.attach_to_lsp()
     return
   end
 
-  local _start_client = vim.lsp.start_client
-  vim.lsp.start_client = function(lsp_config)
-    if lsp_config.on_attach == nil then
-      lsp_config.on_attach = on_attach_lsp
-    else
-      local _on_attach = lsp_config.on_attach
-      lsp_config.on_attach = function(client, bufnr)
-        on_attach_lsp(client, bufnr)
-        _on_attach(client, bufnr)
-      end
-    end
-    return _start_client(lsp_config)
-  end
+  local autocmd_group = vim.api.nvim_create_augroup("project_nvim_lsp_attach", { clear = true })
+  vim.api.nvim_create_autocmd("LspAttach", {
+    group = autocmd_group,
+    pattern = "*",
+    callback = on_attach_lsp,
+    desc = "Change cwd to project root using LSP",
+    nested = true,
+  })
 
   M.attached_lsp = true
 end
 
-function M.set_pwd(dir, method)
-  if dir ~= nil then
-    M.last_project = dir
-    table.insert(history.session_projects, dir)
-
-    if vim.fn.getcwd() ~= dir then
-      local scope_chdir = config.options.scope_chdir
-      if scope_chdir == "global" then
-        vim.api.nvim_set_current_dir(dir)
-      elseif scope_chdir == "tab" then
-        vim.cmd("tcd " .. dir)
-      elseif scope_chdir == "win" then
-        vim.cmd("lcd " .. dir)
-      else
-        return
-      end
-
-      if config.options.silent_chdir == false then
-        vim.notify("Set CWD to " .. dir .. " using " .. method)
-      end
-    end
-    return true
+function M.set_cwd(dir, method)
+  if dir == nil then
+    return false
   end
 
-  return false
+  M.last_project = dir
+  table.insert(history.session_projects, dir)
+
+  if uv.cwd() ~= dir then
+    if config.options.scope_chdir == "global" then
+      vim.api.nvim_set_current_dir(dir)
+    elseif config.options.scope_chdir == "tab" then
+      vim.cmd.tcd(dir)
+    elseif config.options.scope_chdir == "win" then
+      vim.cmd.lcd(dir)
+    else
+      return false
+    end
+
+    if not config.options.silent_chdir then
+      vim.notify(string.format("Set CWD to %s using %s", dir, method))
+    end
+  end
+  return true
 end
 
+--- Tries to return the root of the project
+---@return string|nil root_dir
+---@return string|nil method
 function M.get_project_root()
+  local find_root = {
+    lsp = M.find_lsp_root,
+    pattern = M.find_pattern_root,
+  }
   -- returns project root, as well as method
   for _, detection_method in ipairs(config.options.detection_methods) do
-    if detection_method == "lsp" then
-      local root, lsp_name = M.find_lsp_root()
-      if root ~= nil then
-        return root, '"' .. lsp_name .. '"' .. " lsp"
-      end
-    elseif detection_method == "pattern" then
-      local root, method = M.find_pattern_root()
-      if root ~= nil then
-        return root, method
-      end
+    local root, method = find_root[detection_method]()
+    if root == nil then
+      return nil
     end
+    return root, method
   end
 end
 
@@ -249,33 +250,36 @@ function M.on_buf_enter()
   end
 
   local root, method = M.get_project_root()
-  M.set_pwd(root, method)
+  M.set_cwd(root, method)
 end
 
 function M.init()
-  local autocmds = {}
+  local autocmd_group = vim.api.nvim_create_augroup("project_nvim", { clear = true })
+
   if not config.options.manual_mode then
-    autocmds[#autocmds + 1] = 'autocmd VimEnter,BufEnter * ++nested lua require("project_nvim.project").on_buf_enter()'
+    vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter" }, {
+      group = autocmd_group,
+      pattern = "*",
+      callback = M.on_buf_enter,
+      desc = "Change cwd to project root using patterns",
+      nested = true,
+    })
 
     if vim.tbl_contains(config.options.detection_methods, "lsp") then
       M.attach_to_lsp()
     end
   end
 
-  vim.cmd([[
-    command! ProjectRoot lua require("project_nvim.project").on_buf_enter()
-  ]])
+  vim.api.nvim_create_user_command("ProjectRoot", M.on_buf_enter, {
+    bang = true,
+  })
 
-  autocmds[#autocmds + 1] =
-    'autocmd VimLeavePre * lua require("project_nvim.utils.history").write_projects_to_history()'
-
-  vim.cmd([[augroup project_nvim
-            au!
-  ]])
-  for _, value in ipairs(autocmds) do
-    vim.cmd(value)
-  end
-  vim.cmd("augroup END")
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    group = autocmd_group,
+    pattern = "*",
+    callback = history.write_projects_to_history,
+    desc = "Write project.nvim history to file before closing Neovim",
+  })
 
   history.read_projects_from_history()
 end
