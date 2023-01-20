@@ -17,7 +17,7 @@ function M.find_lsp_root()
   local filetype = vim.api.nvim_buf_get_option(0, "filetype")
   local clients = vim.lsp.get_active_clients({ bufnr = 0 })
   if next(clients) == nil then
-    return nil
+    return nil, nil
   end
 
   for _, client in pairs(clients) do
@@ -27,11 +27,11 @@ function M.find_lsp_root()
       and vim.tbl_contains(filetypes, filetype)
       and not vim.tbl_contains(config.options.ignore_lsp, client.name)
     then
-      return client.config.root_dir, string.format('"%s" lsp', client.name)
+      return client.config.root_dir, ('"%s" lsp'):format(client.name)
     end
   end
 
-  return nil
+  return nil, nil
 end
 
 --- Tries to return the root of the project using pattern matching
@@ -39,65 +39,38 @@ end
 ---@return string|nil method
 function M.find_pattern_root()
   local search_dir = vim.fn.expand("%:p:h", true)
-  if vim.fn.has("win32") > 0 then
-    search_dir = search_dir:gsub("\\", "/")
+  if vim.fn.has("win32") == 1 then
+    search_dir = vim.fs.normalize(search_dir)
   end
 
   local last_dir_cache = ""
   local curr_dir_cache = {}
 
-  local function get_parent(path)
-    if path:match("%a:") then
-      return path
-    end
-    path = path:match("^(.*)/")
-    if path == "" then
-      path = "/"
-    end
-    return path
-  end
-
   local function get_files(file_dir)
     last_dir_cache = file_dir
     curr_dir_cache = {}
 
-    local dir = uv.fs_scandir(file_dir)
-    if dir == nil then
-      return
-    end
-
-    while true do
-      local file = uv.fs_scandir_next(dir)
-      if file == nil then
-        return
-      end
-
-      table.insert(curr_dir_cache, file)
+    for file_name in vim.fs.dir(file_dir) do
+      table.insert(curr_dir_cache, file_name)
     end
   end
 
-  local function is(dir, identifier)
-    dir = dir:match(".*/(.*)")
-    return dir == identifier
+  local function is_equal(dir, identifier)
+    return vim.fs.basename(dir) == identifier
   end
 
-  local function sub(dir, identifier)
-    local path = get_parent(dir)
-    while true do
-      if is(path, identifier) then
+  local function is_descendant(dir, identifier)
+    for name in vim.fs.parents(dir) do
+      if is_equal(name, identifier) then
         return true
       end
-      local current = path
-      path = get_parent(path)
-      if current == path then
-        return false
-      end
     end
+    return false
   end
 
-  local function child(dir, identifier)
-    local path = get_parent(dir)
-    return is(path, identifier)
+  local function is_direct_descendant(dir, identifier)
+    local parent = vim.fs.dirname(dir)
+    return is_equal(parent, identifier)
   end
 
   local function has(dir, identifier)
@@ -113,47 +86,53 @@ function M.find_pattern_root()
     return false
   end
 
+  local match_func = {
+    ["="] = is_equal,
+    ["^"] = is_descendant,
+    [">"] = is_direct_descendant,
+    ["default"] = has,
+  }
+
   local function match(dir, pattern)
-    local first_char = pattern:sub(1, 1)
-    if first_char == "=" then
-      return is(dir, pattern:sub(2))
-    elseif first_char == "^" then
-      return sub(dir, pattern:sub(2))
-    elseif first_char == ">" then
-      return child(dir, pattern:sub(2))
+    local modifier = pattern:sub(1, 1)
+    local identifier = pattern:sub(2)
+
+    if match_func[modifier] then
+      return match_func[modifier](dir, identifier)
     else
-      return has(dir, pattern)
+      return match_func["default"](dir, pattern)
     end
   end
 
-  -- breadth-first search
-  while true do
+  local paths = {
+    search_dir,
+  }
+  for name in vim.fs.parents(search_dir) do
+    table.insert(paths, name)
+  end
+
+  for _, name in ipairs(paths) do
     for _, pattern in ipairs(config.options.patterns) do
-      local exclude = false
-      if pattern:sub(1, 1) == "!" then
-        exclude = true
+      local modifier = pattern:sub(1, 1)
+      if modifier == "!" then
         pattern = pattern:sub(2)
       end
-      if match(search_dir, pattern) then
-        if exclude then
+      if match(name, pattern) then
+        if modifier == "!" then
           break
         else
-          return search_dir, "pattern " .. pattern
+          return name, ("pattern %s"):format(pattern)
         end
       end
     end
-
-    local parent = get_parent(search_dir)
-    if parent == search_dir or parent == nil then
-      return nil
-    end
-
-    search_dir = parent
   end
+
+  return nil, nil
 end
 
 local on_attach_lsp = function()
-  M.on_buf_enter() -- Recalculate root dir after lsp attaches
+  -- Recalculate root dir after lsp attaches
+  M.on_buf_enter()
 end
 
 function M.attach_to_lsp()
@@ -178,22 +157,29 @@ function M.set_cwd(dir, method)
     return false
   end
 
+  local chdir = {
+    global = function()
+      vim.api.nvim_set_current_dir(dir)
+    end,
+    tab = function()
+      vim.cmd.tcd(dir)
+    end,
+    win = function()
+      vim.cmd.lcd(dir)
+    end,
+  }
+  if chdir[config.options.scope_chdir] == nil then
+    return false
+  end
+
   M.last_project = dir
   table.insert(history.session_projects, dir)
 
   if uv.cwd() ~= dir then
-    if config.options.scope_chdir == "global" then
-      vim.api.nvim_set_current_dir(dir)
-    elseif config.options.scope_chdir == "tab" then
-      vim.cmd.tcd(dir)
-    elseif config.options.scope_chdir == "win" then
-      vim.cmd.lcd(dir)
-    else
-      return false
-    end
+    chdir[config.options.scope_chdir]()
 
     if not config.options.silent_chdir then
-      vim.notify(string.format("Set CWD to %s using %s", dir, method))
+      vim.notify(("Set CWD to %s using %s"):format(dir, method))
     end
   end
   return true
@@ -207,7 +193,6 @@ function M.get_project_root()
     lsp = M.find_lsp_root,
     pattern = M.find_pattern_root,
   }
-  -- returns project root, as well as method
   for _, detection_method in ipairs(config.options.detection_methods) do
     local root, method = find_root[detection_method]()
     if root == nil then
@@ -236,11 +221,7 @@ function M.is_file()
 end
 
 function M.on_buf_enter()
-  if vim.v.vim_did_enter == 0 then
-    return
-  end
-
-  if not M.is_file() then
+  if vim.v.vim_did_enter == 0 or M.is_file() then
     return
   end
 
