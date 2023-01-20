@@ -221,7 +221,7 @@ function M.is_file()
 end
 
 function M.on_buf_enter()
-  if vim.v.vim_did_enter == 0 or M.is_file() then
+  if vim.v.vim_did_enter == 0 or not M.is_file() then
     return
   end
 
