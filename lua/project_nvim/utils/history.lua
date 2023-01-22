@@ -83,22 +83,24 @@ end
 
 local function setup_watch()
   -- Only runs once
-  if M.has_watch_setup == false then
-    M.has_watch_setup = true
-    local event = uv.new_fs_event()
-    if event == nil then
+  if M.has_watch_setup then
+    return
+  end
+
+  M.has_watch_setup = true
+  local event = uv.new_fs_event()
+  if event == nil then
+    return
+  end
+  event:start(path.projectpath, {}, function(err, _, events)
+    if err ~= nil then
       return
     end
-    event:start(path.projectpath, {}, function(err, _, events)
-      if err ~= nil then
-        return
-      end
-      if events["change"] then
-        M.recent_projects = nil
-        M.read_projects_from_history()
-      end
-    end)
-  end
+    if events["change"] then
+      M.recent_projects = nil
+      M.read_projects_from_history()
+    end
+  end)
 end
 
 function M.read_projects_from_history()

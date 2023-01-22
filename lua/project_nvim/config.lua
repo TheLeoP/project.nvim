@@ -35,14 +35,20 @@ M.defaults = {
   -- * global (default)
   -- * tab
   -- * win
-  scope_chdir = 'global',
+  scope_chdir = "global",
 
   -- Path where project.nvim will store the project history for use in
   -- telescope
   datapath = vim.fn.stdpath("data"),
 
   -- Allows the user to declare a custom callback to execute on project selection
-  custom_callback = false,
+  on_project_selection = false,
+
+  -- Whether or no to call find_files on project selection
+  -- on_project_selection: find_files gets called if the callback
+  -- on_project_selection returns true
+  ---@type "always"|"on_project_selection"
+  find_files = "always",
 }
 
 ---@type ProjectOptions

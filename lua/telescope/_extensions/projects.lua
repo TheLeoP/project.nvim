@@ -59,24 +59,20 @@ local function create_finder()
   })
 end
 
-local function change_working_directory(prompt_bufnr, prompt)
+local function change_working_directory(prompt_bufnr)
   local selected_entry = state.get_selected_entry(prompt_bufnr)
   if selected_entry == nil then
     actions.close(prompt_bufnr)
     return
   end
   local project_path = selected_entry.value
-  if prompt == true then
-    actions._close(prompt_bufnr, true)
-  else
-    actions.close(prompt_bufnr)
-  end
+  actions.close(prompt_bufnr)
   local cd_successful = project.set_cwd(project_path, "telescope")
   return project_path, cd_successful
 end
 
 local function find_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -88,7 +84,7 @@ local function find_project_files(prompt_bufnr)
 end
 
 local function browse_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -99,7 +95,7 @@ local function browse_project_files(prompt_bufnr)
 end
 
 local function search_in_project_files(prompt_bufnr)
-  local project_path, cd_successful = change_working_directory(prompt_bufnr, true)
+  local project_path, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd = project_path,
     hidden = config.options.show_hidden,
@@ -111,7 +107,7 @@ local function search_in_project_files(prompt_bufnr)
 end
 
 local function recent_project_files(prompt_bufnr)
-  local _, cd_successful = change_working_directory(prompt_bufnr, true)
+  local _, cd_successful = change_working_directory(prompt_bufnr)
   local opt = {
     cwd_only = true,
     hidden = config.options.show_hidden,
@@ -127,7 +123,7 @@ local function delete_project(prompt_bufnr)
     actions.close(prompt_bufnr)
     return
   end
-  local choice = vim.fn.confirm("Delete '" .. selectedEntry.value .. "' from project list?", "&Yes\n&No", 2)
+  local choice = vim.fn.confirm(("Delete '%s' from project list?"):format(selectedEntry.value), "&Yes\n&No", 2)
 
   if choice == 1 then
     history.delete_project(selectedEntry)
@@ -136,6 +132,27 @@ local function delete_project(prompt_bufnr)
     state.get_current_picker(prompt_bufnr):refresh(finder, {
       reset_prompt = true,
     })
+  end
+end
+
+local on_project_selected = function(prompt_bufnr)
+  local open_find_files = false
+  local switch = {
+    always = find_project_files,
+    on_project_selection = function(prompt_bufnr)
+      if open_find_files then
+        find_project_files(prompt_bufnr)
+      else
+        actions.close(prompt_bufnr)
+      end
+    end,
+  }
+
+  if config.options.on_project_selection then
+    _, open_find_files = pcall(config.options.on_project_selection, prompt_bufnr)
+  end
+  if switch[config.options.find_files] then
+    switch[config.options.find_files](prompt_bufnr)
   end
 end
 
@@ -150,7 +167,7 @@ local function projects(opts)
       finder = create_finder(),
       previewer = false,
       sorter = telescope_config.generic_sorter(opts),
-      attach_mappings = function(prompt_bufnr, map)
+      attach_mappings = function(_, map)
         map("n", "f", find_project_files)
         map("n", "b", browse_project_files)
         map("n", "d", delete_project)
@@ -164,13 +181,6 @@ local function projects(opts)
         map("i", "<c-s>", search_in_project_files)
         map("i", "<c-r>", recent_project_files)
         map("i", "<c-w>", change_working_directory)
-
-        local on_project_selected = function()
-          find_project_files(prompt_bufnr)
-          if config.options.custom_callback then
-            config.options.custom_callback()
-          end
-        end
 
         actions.select_default:replace(on_project_selected)
         return true
