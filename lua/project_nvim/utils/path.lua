@@ -12,6 +12,7 @@ function M.init()
   M.historyfile = M.projectpath .. "/project_history" -- file
 end
 
+---@param callback? function
 function M.create_scaffolding(callback)
   if callback ~= nil then -- async
     uv.fs_mkdir(M.projectpath, 448, callback)
@@ -20,18 +21,18 @@ function M.create_scaffolding(callback)
   end
 end
 
+---@param dir string
+---@return boolean
 function M.is_excluded(dir)
   for _, dir_pattern in ipairs(config.options.exclude_dirs) do
-    if dir:match(dir_pattern) ~= nil then
-      return true
-    end
+    if dir:match(dir_pattern) ~= nil then return true end
   end
 
   return false
 end
 
-function M.exists(path)
-  return vim.fn.empty(vim.fn.glob(path)) == 0
-end
+---@param path string
+---@return boolean
+function M.exists(path) return vim.fn.empty(vim.fn.glob(path)) == 0 end
 
 return M
