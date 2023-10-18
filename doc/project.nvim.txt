@@ -124,6 +124,7 @@ CONFIGURATION                        *project.nvim-project.nvim-configuration*
     
       -- Don't calculate root dir on specific directories
       -- Ex: { "~/.cargo/*", ... }
+      ---@type string[]
       exclude_dirs = {},
     
       -- Show hidden files in telescope
@@ -137,15 +138,15 @@ CONFIGURATION                        *project.nvim-project.nvim-configuration*
       -- * global (default)
       -- * tab
       -- * win
-      scope_chdir = 'global',
+      scope_chdir = "global",
     
       -- Path where project.nvim will store the project history for use in
       -- telescope
       datapath = vim.fn.stdpath("data"),
     
-      -- Allows the user to declare a custom callback to execute on project 
-      -- selection. Setting this to false means that nothing will be executed.
-      custom_callback = false,
+      -- Whether or no to call find_files on project selection
+      ---@type boolean|fun(prompt_bufnr: number): boolean
+      find_files = true,
     }
 <
 
