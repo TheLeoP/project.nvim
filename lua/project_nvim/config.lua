@@ -22,6 +22,7 @@ M.defaults = {
 
   -- Don't calculate root dir on specific directories
   -- Ex: { "~/.cargo/*", ... }
+  ---@type string[]
   exclude_dirs = {},
 
   -- Show hidden files in telescope
@@ -49,22 +50,27 @@ M.defaults = {
 ---@type ProjectOptions
 M.options = {}
 
+---@param options ProjectOptions
 M.setup = function(options)
   M.options = vim.tbl_deep_extend("force", M.defaults, options or {})
 
   local glob = require("project_nvim.utils.globtopattern")
   local home = vim.fn.expand("~")
-  M.options.exclude_dirs = vim.tbl_map(function(pattern)
-    if vim.startswith(pattern, "~/") then
-      pattern = home .. "/" .. pattern:sub(3, #pattern)
-    end
-    return glob.globtopattern(pattern)
-  end, M.options.exclude_dirs)
+  M.options.exclude_dirs = vim.tbl_map(
+    ---@param pattern string
+    ---@return string
+    function(pattern)
+      if vim.startswith(pattern, "~/") then
+        pattern = home .. "/" .. pattern:sub(3, #pattern) --[[@as string]]
+      end
+      return glob.globtopattern(pattern)
+    end,
+    M.options.exclude_dirs
+  ) --[=[@as string[]]=]
 
-  vim.opt.autochdir = false -- implicitly unset autochdir
+  vim.o.autochdir = false -- implicitly unset autochdir
 
   require("project_nvim.utils.path").init()
-  require("project_nvim.project").init()
 end
 
 return M
