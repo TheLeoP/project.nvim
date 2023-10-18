@@ -41,14 +41,9 @@ M.defaults = {
   -- telescope
   datapath = vim.fn.stdpath("data"),
 
-  -- Allows the user to declare a custom callback to execute on project selection
-  on_project_selection = false,
-
   -- Whether or no to call find_files on project selection
-  -- on_project_selection: find_files gets called if the callback
-  -- on_project_selection returns true
-  ---@type "always"|"on_project_selection"
-  find_files = "always",
+  ---@type boolean|fun(prompt_bufnr: number): boolean
+  find_files = true,
 }
 
 ---@type ProjectOptions

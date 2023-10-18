@@ -137,22 +137,17 @@ end
 
 local on_project_selected = function(prompt_bufnr)
   local open_find_files = false
-  local switch = {
-    always = find_project_files,
-    on_project_selection = function(prompt_bufnr)
-      if open_find_files then
-        find_project_files(prompt_bufnr)
-      else
-        actions.close(prompt_bufnr)
-      end
-    end,
-  }
 
-  if config.options.on_project_selection then
-    _, open_find_files = pcall(config.options.on_project_selection, prompt_bufnr)
+  if vim.is_callable(config.options.find_files) then
+    open_find_files = config.options.find_files(prompt_bufnr)
+  else
+    open_find_files = config.options.find_files --[[@as boolean]]
   end
-  if switch[config.options.find_files] then
-    switch[config.options.find_files](prompt_bufnr)
+
+  if open_find_files then
+    find_project_files(prompt_bufnr)
+  else
+    actions.close(prompt_bufnr)
   end
 end
 
