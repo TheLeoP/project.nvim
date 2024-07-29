@@ -21,7 +21,7 @@ function M.find_lsp_root()
     :flatten(1)
     :map(function(workspace_folder) return workspace_folder.name end)
     :find(function(root)
-      root = path.normalize(root)
+      root = path.normalize(root) .. "/"
       local current_file = vim.api.nvim_buf_get_name(0)
       current_file = path.normalize(current_file)
       return current_file:find(vim.pesc(root))
