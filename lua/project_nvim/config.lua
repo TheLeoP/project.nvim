@@ -1,6 +1,30 @@
 local M = {}
 
 ---@class ProjectOptions
+---@field manual_mode boolean
+---@field detection_methods string[]
+---@field patterns string[]
+---@field ignore_lsp string[]
+---@field exclude_dirs string[]
+---@field show_hidden boolean
+---@field silent_chdir boolean
+---@field scope_chdir  "global"|'tab'|'win'
+---@field datapath string
+---@field find_files boolean|fun(prompt_bufnr: number): boolean
+
+---@class ProjectOptionsPartial
+---@field manual_mode? boolean
+---@field detection_methods? string[]
+---@field patterns? string[]
+---@field ignore_lsp? string[]
+---@field exclude_dirs? string[]
+---@field show_hidden? boolean
+---@field silent_chdir? boolean
+---@field scope_chdir?  "global"|'tab'|'win'
+---@field datapath? string
+---@field find_files? boolean|fun(prompt_bufnr: number): boolean
+
+---@type ProjectOptions
 M.defaults = {
   -- Manual mode doesn't automatically change your root directory, so you have
   -- the option to manually do so using `:ProjectRoot` command.
@@ -40,35 +64,29 @@ M.defaults = {
 
   -- Path where project.nvim will store the project history for use in
   -- telescope
-  datapath = vim.fn.stdpath("data"),
+  datapath = vim.fn.stdpath("data") --[[@as string]],
 
-  -- Whether or no to call find_files on project selection
-  ---@type boolean|fun(prompt_bufnr: number): boolean
   find_files = true,
 }
 
 ---@type ProjectOptions
-M.options = {}
+M.options = nil
 
----@param options ProjectOptions
+---@param options? ProjectOptionsPartial
 M.setup = function(options)
   M.options = vim.tbl_deep_extend("force", M.defaults, options or {})
 
   local glob = require("project_nvim.utils.globtopattern")
-  local home = vim.fn.expand("~")
-  M.options.exclude_dirs = vim.tbl_map(
+  M.options.exclude_dirs = vim.iter(M.options.exclude_dirs):map(
     ---@param pattern string
     ---@return string
     function(pattern)
-      if vim.startswith(pattern, "~/") then
-        pattern = home .. "/" .. pattern:sub(3, #pattern) --[[@as string]]
-      end
+      if vim.startswith(pattern, "~/") then pattern = vim.fn.expand(pattern) end
       return glob.globtopattern(pattern)
-    end,
-    M.options.exclude_dirs
+    end
   ) --[=[@as string[]]=]
 
-  vim.o.autochdir = false -- implicitly unset autochdir
+  vim.o.autochdir = false
 
   require("project_nvim.utils.path").init()
   require("project_nvim.project").init()

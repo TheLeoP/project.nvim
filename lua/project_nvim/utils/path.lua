@@ -14,9 +14,9 @@ end
 
 ---@param callback? function
 function M.create_scaffolding(callback)
-  if callback ~= nil then -- async
+  if callback ~= nil then
     uv.fs_mkdir(M.projectpath, 448, callback)
-  else -- sync
+  else
     uv.fs_mkdir(M.projectpath, 448)
   end
 end

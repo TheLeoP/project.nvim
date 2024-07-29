@@ -21,12 +21,9 @@ local config = require("project_nvim.config")
 ----------
 
 local function create_finder()
-  local results = history.get_recent_projects()
+  local projects = history.get_recent_projects()
+  projects = vim.iter(projects):rev():totable()
 
-  -- Reverse results
-  for i = 1, math.floor(#results / 2) do
-    results[i], results[#results - i + 1] = results[#results - i + 1], results[i]
-  end
   local displayer = entry_display.create({
     separator = " ",
     items = {
@@ -42,7 +39,7 @@ local function create_finder()
   local function make_display(entry) return displayer({ entry.name, { entry.value, "Comment" } }) end
 
   return finders.new_table({
-    results = results,
+    results = projects,
     ---@param entry string
     entry_maker = function(entry)
       local name = vim.fn.fnamemodify(entry, ":t")

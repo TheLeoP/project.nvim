@@ -40,7 +40,7 @@ function M.find_pattern_root()
   search_dir = path.normalize(search_dir)
 
   local last_dir_cache = ""
-  local curr_dir_cache = {}
+  local curr_dir_cache = {} ---@type string[]
 
   local function get_files(file_dir)
     last_dir_cache = file_dir
@@ -81,6 +81,8 @@ function M.find_pattern_root()
     ["default"] = has,
   }
 
+  ---@param dir string
+  ---@param pattern string
   local function match(dir, pattern)
     local modifier = pattern:sub(1, 1)
     local identifier = pattern:sub(2)
@@ -172,21 +174,10 @@ function M.get_project_root()
   end
 end
 
+local whitelisted_buftype = { "", "acwrite" }
 ---@return boolean
 function M.is_file()
-  local buf_type = vim.api.nvim_buf_get_option(0, "buftype")
-
-  local whitelisted_buf_type = { "", "acwrite" }
-  local is_in_whitelist = false
-  for _, wtype in ipairs(whitelisted_buf_type) do
-    if buf_type == wtype then
-      is_in_whitelist = true
-      break
-    end
-  end
-  if not is_in_whitelist then return false end
-
-  return true
+  return vim.tbl_contains(whitelisted_buftype, vim.o.buftype)
 end
 
 function M.on_buf_enter()
