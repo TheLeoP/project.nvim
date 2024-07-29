@@ -2,35 +2,34 @@ local config = require("project_nvim.config")
 local history = require("project_nvim.utils.history")
 local glob = require("project_nvim.utils.globtopattern")
 local path = require("project_nvim.utils.path")
-local uv = vim.loop
+local uv = vim.uv
 local M = {}
 
 -- Internal states
 M.attached_lsp = false
----@type string
-M.last_project = nil
+M.last_project = nil ---@type string?
 
 --- Tries to return the root of the project using LSP
 ---@return string|nil root_dir
 ---@return string|nil method
 function M.find_lsp_root()
-  -- Returns nil or string
-  local filetype = vim.api.nvim_buf_get_option(0, "filetype")
-  local clients = vim.lsp.get_active_clients({ bufnr = 0 })
-  if next(clients) == nil then return nil, nil end
+  ---@type string
+  local workspace_root = vim
+    .iter(vim.lsp.get_clients({ bufnr = 0 }))
+    :filter(function(client) return not vim.tbl_contains({}, client.name) end)
+    :map(function(client) return client.workspace_folders end)
+    :flatten(1)
+    :map(function(workspace_folder) return workspace_folder.name end)
+    :find(function(root)
+      root = path.normalize(root)
+      local current_file = vim.api.nvim_buf_get_name(0)
+      current_file = path.normalize(current_file)
+      return current_file:find(vim.pesc(root))
+    end)
 
-  for _, client in pairs(clients) do
-    local filetypes = client.config.filetypes
-    if
-      filetypes
-      and vim.tbl_contains(filetypes, filetype)
-      and not vim.tbl_contains(config.options.ignore_lsp, client.name)
-    then
-      return client.config.root_dir, ('"%s" lsp'):format(client.name)
-    end
-  end
+  if not workspace_root then return end
 
-  return nil, nil
+  return workspace_root, "lsp"
 end
 
 --- Tries to return the root of the project using pattern matching
@@ -38,7 +37,7 @@ end
 ---@return string|nil method
 function M.find_pattern_root()
   local search_dir = vim.fn.expand("%:p:h", true)
-  if vim.fn.has("win32") == 1 then search_dir = vim.fs.normalize(search_dir) end
+  search_dir = path.normalize(search_dir)
 
   local last_dir_cache = ""
   local curr_dir_cache = {}
@@ -168,7 +167,7 @@ function M.get_project_root()
   }
   for _, detection_method in ipairs(config.options.detection_methods) do
     local root, method = find_root[detection_method]()
-    if root == nil then return nil end
+    if not root then return end
     return root, method
   end
 end

@@ -25,7 +25,7 @@ end
 ---@return boolean
 function M.is_excluded(dir)
   for _, dir_pattern in ipairs(config.options.exclude_dirs) do
-    if dir:match(dir_pattern) ~= nil then return true end
+    if not dir:match(dir_pattern) then return true end
   end
 
   return false
@@ -33,6 +33,15 @@ end
 
 ---@param path string
 ---@return boolean
-function M.exists(path) return vim.fn.empty(vim.fn.glob(path)) == 0 end
+function M.exists(path) return vim.uv.fs_stat(path) ~= nil end
+
+---@param path string
+---@return string
+function M.normalize(path)
+  path = vim.fs.normalize(path)
+  path = path:gsub([[\]], "/")
+  if vim.fn.has("win32") == 1 then path = path:sub(1, 1):upper() .. path:sub(2) end
+  return path
+end
 
 return M
