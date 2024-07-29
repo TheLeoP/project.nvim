@@ -40,7 +40,7 @@ function M.exists(path) return vim.uv.fs_stat(path) ~= nil end
 function M.normalize(path)
   path = vim.fs.normalize(path)
   path = path:gsub([[\]], "/")
-  if vim.fn.has("win32") == 1 then path = path:sub(1, 1):upper() .. path:sub(2) end
+  if vim.fn.has("win32") == 1 then path = path:sub(1, 1):upper() .. path:sub(2):lower() end
   return path
 end
 
