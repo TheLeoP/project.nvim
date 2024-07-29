@@ -118,25 +118,7 @@ function M.find_pattern_root()
   return nil, nil
 end
 
-local on_attach_lsp = function()
-  -- Recalculate root dir after lsp attaches
-  M.on_buf_enter()
-end
-
-function M.attach_to_lsp()
-  if M.attached_lsp then return end
-
-  local autocmd_group = vim.api.nvim_create_augroup("project_nvim_lsp_attach", { clear = true })
-  vim.api.nvim_create_autocmd("LspAttach", {
-    group = autocmd_group,
-    pattern = "*",
-    callback = on_attach_lsp,
-    desc = "Change cwd to project root using LSP",
-    nested = true,
-  })
-
-  M.attached_lsp = true
-end
+function M.attach_to_lsp() end
 
 function M.set_cwd(dir, method)
   if dir == nil then return false end
@@ -176,9 +158,7 @@ end
 
 local whitelisted_buftype = { "", "acwrite" }
 ---@return boolean
-function M.is_file()
-  return vim.tbl_contains(whitelisted_buftype, vim.o.buftype)
-end
+function M.is_file() return vim.tbl_contains(whitelisted_buftype, vim.o.buftype) end
 
 function M.on_buf_enter()
   if vim.v.vim_did_enter == 0 or not M.is_file() then return end
@@ -191,26 +171,34 @@ function M.on_buf_enter()
 end
 
 function M.init()
-  local autocmd_group = vim.api.nvim_create_augroup("project_nvim", { clear = true })
+  local group = vim.api.nvim_create_augroup("project_nvim", { clear = true })
 
   if not config.options.manual_mode then
     vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter" }, {
-      group = autocmd_group,
+      group = group,
       pattern = "*",
       callback = M.on_buf_enter,
       desc = "Change cwd to project root using patterns",
-      nested = true,
     })
 
-    if vim.tbl_contains(config.options.detection_methods, "lsp") then M.attach_to_lsp() end
+    if vim.tbl_contains(config.options.detection_methods, "lsp") then
+      if M.attached_lsp then return end
+
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = group,
+        pattern = "*",
+        callback = M.on_buf_enter,
+        desc = "Change cwd to project root using LSP",
+      })
+
+      M.attached_lsp = true
+    end
   end
 
-  vim.api.nvim_create_user_command("ProjectRoot", M.on_buf_enter, {
-    bang = true,
-  })
+  vim.api.nvim_create_user_command("ProjectRoot", M.on_buf_enter, {})
 
   vim.api.nvim_create_autocmd("VimLeavePre", {
-    group = autocmd_group,
+    group = group,
     pattern = "*",
     callback = history.write_projects_to_history,
     desc = "Write project.nvim history to file before closing Neovim",

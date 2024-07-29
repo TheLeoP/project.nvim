@@ -2,14 +2,14 @@ local config = require("project_nvim.config")
 local uv = vim.loop
 local M = {}
 
-M.datapath = vim.fn.stdpath("data") -- directory
-M.projectpath = M.datapath .. "/project_nvim" -- directory
-M.historyfile = M.projectpath .. "/project_history" -- file
+M.datapath = vim.fn.stdpath("data")
+M.projectpath = M.datapath .. "/project_nvim"
+M.historyfile = M.projectpath .. "/project_history"
 
 function M.init()
   M.datapath = require("project_nvim.config").options.datapath
-  M.projectpath = M.datapath .. "/project_nvim" -- directory
-  M.historyfile = M.projectpath .. "/project_history" -- file
+  M.projectpath = M.datapath .. "/project_nvim"
+  M.historyfile = M.projectpath .. "/project_history"
 end
 
 ---@param callback? function

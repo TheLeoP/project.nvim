@@ -62,8 +62,7 @@ M.defaults = {
   -- * win
   scope_chdir = "global",
 
-  -- Path where project.nvim will store the project history for use in
-  -- telescope
+  -- Path where project.nvim will store the project history
   datapath = vim.fn.stdpath("data") --[[@as string]],
 
   find_files = true,

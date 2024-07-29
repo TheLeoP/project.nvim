@@ -68,12 +68,11 @@ local function deserialize_history(history_data)
 end
 
 local function setup_watch()
-  -- Only runs once
   if M.has_watch_setup then return end
 
   M.has_watch_setup = true
   local event = uv.new_fs_event()
-  if event == nil then return end
+  if not event then return end
   event:start(path.projectpath, {}, function(err, _, events)
     if err ~= nil then return end
     if events["change"] then
@@ -86,16 +85,14 @@ end
 function M.read_projects_from_history()
   open_history("r", function(_, fd)
     setup_watch()
-    if fd ~= nil then
-      uv.fs_fstat(fd, function(_, stat)
-        if stat ~= nil then
-          uv.fs_read(fd, stat.size, -1, function(_, data)
-            uv.fs_close(fd, function(_, _) end)
-            deserialize_history(data)
-          end)
-        end
+    if not fd then return end
+    uv.fs_fstat(fd, function(_, stat)
+      if not stat then return end
+      uv.fs_read(fd, stat.size, -1, function(_, data)
+        uv.fs_close(fd, function(_, _) end)
+        deserialize_history(data)
       end)
-    end
+    end)
   end)
 end
 
