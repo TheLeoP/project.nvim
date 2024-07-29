@@ -35,6 +35,13 @@ end
 ---@return boolean
 function M.exists(path) return vim.uv.fs_stat(path) ~= nil end
 
+---@param dir string
+---@return boolean
+function M.dir_exists(dir)
+  local stat = uv.fs_stat(dir)
+  return stat ~= nil and stat.type == "directory"
+end
+
 ---@param path string
 ---@return string
 function M.normalize(path)

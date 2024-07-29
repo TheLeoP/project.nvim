@@ -10,39 +10,12 @@ M.has_watch_setup = false
 ---@param mode string
 ---@param callback? function
 local function open_history(mode, callback)
-  if callback ~= nil then -- async
+  if callback ~= nil then
     path.create_scaffolding(function(_, _) uv.fs_open(path.historyfile, mode, 438, callback) end)
-  else -- sync
+  else
     path.create_scaffolding()
     return uv.fs_open(path.historyfile, mode, 438)
   end
-end
-
----@param dir string
----@return boolean
-local function dir_exists(dir)
-  local stat = uv.fs_stat(dir)
-  if stat ~= nil and stat.type == "directory" then return true end
-  return false
-end
-
----@param tbl string[]
----@return string[]
-local function delete_duplicates(tbl)
-  ---@type table<string, boolean>
-  local cache = {}
-  ---@type string[]
-  local output = {}
-
-  for _, v in ipairs(tbl) do
-    local normalised_path = path.normalize(v)
-    if not cache[normalised_path] then
-      cache[normalised_path] = true
-      table.insert(output, normalised_path)
-    end
-  end
-
-  return output
 end
 
 ---@param project string
@@ -52,17 +25,27 @@ function M.delete_project(project)
   end
 end
 
+local function toset()
+  local already_seen = {} ---@type table<string, boolean>
+  return function(paths, _path)
+    if not already_seen[_path] then
+      already_seen[_path] = true
+      paths[#paths + 1] = _path
+    end
+    return paths
+  end
+end
+
 ---@param history_data string|nil
 local function deserialize_history(history_data)
   if not history_data then return end
 
   ---@type string[]
-  local projects = {}
-  for s in history_data:gmatch("[^\r\n]+") do
-    if not path.is_excluded(s) and dir_exists(s) then table.insert(projects, s) end
-  end
-
-  projects = delete_duplicates(projects)
+  local projects = vim
+    .iter(vim.gsplit(history_data, "[\r\n]+", { trimempty = true }))
+    :filter(function(_path) return not path.is_excluded(_path) and path.dir_exists(_path) end)
+    :map(path.normalize)
+    :fold({}, toset())
 
   M.recent_projects = projects
 end
@@ -98,22 +81,10 @@ end
 
 ---@return string[]
 local function sanitize_projects()
-  local projects = {}
-  if M.recent_projects ~= nil then
-    vim.list_extend(projects, M.recent_projects)
-    vim.list_extend(projects, M.session_projects)
-  else
-    projects = M.session_projects
-  end
+  local projects = M.session_projects
+  if M.recent_projects then vim.list_extend(projects, M.recent_projects) end
 
-  projects = delete_duplicates(projects)
-
-  local output = {}
-  for _, dir in ipairs(projects) do
-    if dir_exists(dir) then table.insert(output, dir) end
-  end
-
-  return output
+  return vim.iter(projects):filter(function(dir) return path.dir_exists(dir) end):fold({}, toset())
 end
 
 function M.get_recent_projects() return sanitize_projects() end
