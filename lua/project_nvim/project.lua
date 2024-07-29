@@ -13,6 +13,8 @@ M.last_project = nil ---@type string?
 ---@return string|nil root_dir
 ---@return string|nil method
 function M.find_lsp_root()
+  local current_file = vim.api.nvim_buf_get_name(0)
+  current_file = path.normalize(current_file)
   ---@type string
   local workspace_root = vim
     .iter(vim.lsp.get_clients({ bufnr = 0 }))
@@ -22,8 +24,6 @@ function M.find_lsp_root()
     :map(function(workspace_folder) return workspace_folder.name end)
     :find(function(root)
       root = path.normalize(root) .. "/"
-      local current_file = vim.api.nvim_buf_get_name(0)
-      current_file = path.normalize(current_file)
       return current_file:find(vim.pesc(root))
     end)
 
