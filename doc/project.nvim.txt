@@ -33,32 +33,6 @@ FEATURES                                  *project.nvim-project.nvim-features*
     - Access your recently opened projects from telescope!
     - Asynchronous file io so it will not slow down vim when reading the history
         file on startup.
-- ~Nvim-tree.lua support/integration~
-    - Please add the following to your config instead:
-        >vim
-            " Vim Script
-            lua << EOF
-            require("nvim-tree").setup({
-              sync_root_with_cwd = true,
-              respect_buf_cwd = true,
-              update_focused_file = {
-                enable = true,
-                update_root = true
-              },
-            })
-            EOF
-        <
-        >lua
-            -- lua
-            require("nvim-tree").setup({
-              sync_root_with_cwd = true,
-              respect_buf_cwd = true,
-              update_focused_file = {
-                enable = true,
-                update_root = true
-              },
-            })
-        <
 
 
 INSTALLATION                          *project.nvim-project.nvim-installation*
@@ -69,7 +43,6 @@ Install the plugin with your preferred package manager:
 VIM-PLUG ~
 
 >vim
-    " Vim Script
     Plug 'ahmedkhalf/project.nvim'
     
     lua << EOF
@@ -85,16 +58,9 @@ VIM-PLUG ~
 PACKER ~
 
 >lua
-    -- Lua
-    use {
-      "ahmedkhalf/project.nvim",
-      config = function()
-        require("project_nvim").setup {
-          -- your configuration comes here
-          -- or leave it empty to use the default settings
-          -- refer to the configuration section below
-        }
-      end
+    return {
+      "TheLeoP/project.nvim",
+      opts = {},
     }
 <
 
@@ -112,7 +78,7 @@ CONFIGURATION                        *project.nvim-project.nvim-configuration*
       -- Methods of detecting the root directory. **"lsp"** uses the native neovim
       -- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
       -- order matters: if one is not detected, the other is used as fallback. You
-      -- can also delete or rearangne the detection methods.
+      -- can also delete or rearrange the detection methods.
       detection_methods = { "lsp", "pattern" },
     
       -- All the patterns used to detect root dir, when **"pattern"** is in
@@ -125,7 +91,6 @@ CONFIGURATION                        *project.nvim-project.nvim-configuration*
     
       -- Don't calculate root dir on specific directories
       -- Ex: { "~/.cargo/*", ... }
-      ---@type string[]
       exclude_dirs = {},
     
       -- Show hidden files in telescope
@@ -141,8 +106,7 @@ CONFIGURATION                        *project.nvim-project.nvim-configuration*
       -- * win
       scope_chdir = "global",
     
-      -- Path where project.nvim will store the project history for use in
-      -- telescope
+      -- Path where project.nvim will store the project history
       datapath = vim.fn.stdpath("data"),
     
       -- Whether or no to call find_files on project selection
@@ -236,7 +200,7 @@ Get a list of recent projects:
     local project_nvim = require("project_nvim")
     local recent_projects = project_nvim.get_recent_projects()
     
-    print(vim.inspect(recent_projects))
+    vim.print(recent_projects)
 <
 
 
