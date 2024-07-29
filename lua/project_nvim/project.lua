@@ -16,7 +16,7 @@ function M.find_lsp_root()
   ---@type string
   local workspace_root = vim
     .iter(vim.lsp.get_clients({ bufnr = 0 }))
-    :filter(function(client) return not vim.tbl_contains({}, client.name) end)
+    :filter(function(client) return not vim.tbl_contains(config.options.ignore_lsp, client.name) end)
     :map(function(client) return client.workspace_folders end)
     :flatten(1)
     :map(function(workspace_folder) return workspace_folder.name end)
