@@ -1,4 +1,4 @@
-*project.nvim.txt*       For Neovim >= 0.8.0      Last change: 2023 October 18
+*project.nvim.txt*        For Neovim >= 0.8.0        Last change: 2024 July 29
 
 ==============================================================================
 Table of Contents                             *project.nvim-table-of-contents*
@@ -10,6 +10,7 @@ Table of Contents                             *project.nvim-table-of-contents*
   - Configuration                    |project.nvim-project.nvim-configuration|
   - API                                        |project.nvim-project.nvim-api|
   - Contributing                      |project.nvim-project.nvim-contributing|
+2. Links                                                  |project.nvim-links|
 
 ==============================================================================
 1. project.nvim                                    *project.nvim-project.nvim*
