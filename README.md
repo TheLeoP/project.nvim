@@ -18,32 +18,6 @@ superior project management.
   - Access your recently opened projects from telescope!
   - Asynchronous file io so it will not slow down vim when reading the history
     file on startup.
-- ~~Nvim-tree.lua support/integration~~
-  - Please add the following to your config instead:
-    ```vim
-    " Vim Script
-    lua << EOF
-    require("nvim-tree").setup({
-      sync_root_with_cwd = true,
-      respect_buf_cwd = true,
-      update_focused_file = {
-        enable = true,
-        update_root = true
-      },
-    })
-    EOF
-    ```
-    ```lua
-    -- lua
-    require("nvim-tree").setup({
-      sync_root_with_cwd = true,
-      respect_buf_cwd = true,
-      update_focused_file = {
-        enable = true,
-        update_root = true
-      },
-    })
-    ```
 
 ## 📦 Installation
 
@@ -52,7 +26,6 @@ Install the plugin with your preferred package manager:
 ### [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-" Vim Script
 Plug 'ahmedkhalf/project.nvim'
 
 lua << EOF
@@ -67,16 +40,9 @@ EOF
 ### [packer](https://github.com/wbthomason/packer.nvim)
 
 ```lua
--- Lua
-use {
-  "ahmedkhalf/project.nvim",
-  config = function()
-    require("project_nvim").setup {
-      -- your configuration comes here
-      -- or leave it empty to use the default settings
-      -- refer to the configuration section below
-    }
-  end
+return {
+  "TheLeoP/project.nvim",
+  opts = {},
 }
 ```
 
@@ -93,7 +59,7 @@ use {
   -- Methods of detecting the root directory. **"lsp"** uses the native neovim
   -- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
   -- order matters: if one is not detected, the other is used as fallback. You
-  -- can also delete or rearangne the detection methods.
+  -- can also delete or rearrange the detection methods.
   detection_methods = { "lsp", "pattern" },
 
   -- All the patterns used to detect root dir, when **"pattern"** is in
@@ -106,7 +72,6 @@ use {
 
   -- Don't calculate root dir on specific directories
   -- Ex: { "~/.cargo/*", ... }
-  ---@type string[]
   exclude_dirs = {},
 
   -- Show hidden files in telescope
@@ -122,8 +87,7 @@ use {
   -- * win
   scope_chdir = "global",
 
-  -- Path where project.nvim will store the project history for use in
-  -- telescope
+  -- Path where project.nvim will store the project history
   datapath = vim.fn.stdpath("data"),
 
   -- Whether or no to call find_files on project selection
@@ -179,12 +143,15 @@ List your exclusions before the patterns you do want.
 ### Telescope Integration
 
 To enable telescope integration:
+
 ```lua
 require('telescope').load_extension('projects')
 ```
 
 #### Telescope Projects Picker
+
 To use the projects picker
+
 ```lua
 require'telescope'.extensions.projects.projects{}
 ```
@@ -193,14 +160,14 @@ require'telescope'.extensions.projects.projects{}
 
 **project.nvim** comes with the following mappings:
 
-| Normal mode | Insert mode | Action                     |
-| ----------- | ----------- | -------------------------- |
-| f           | \<c-f\>     | find\_project\_files       |
-| b           | \<c-b\>     | browse\_project\_files     |
-| d           | \<c-d\>     | delete\_project            |
-| s           | \<c-s\>     | search\_in\_project\_files |
-| r           | \<c-r\>     | recent\_project\_files     |
-| w           | \<c-w\>     | change\_working\_directory |
+| Normal mode | Insert mode | Action                   |
+| ----------- | ----------- | ------------------------ |
+| f           | \<c-f\>     | find_project_files       |
+| b           | \<c-b\>     | browse_project_files     |
+| d           | \<c-d\>     | delete_project           |
+| s           | \<c-s\>     | search_in_project_files  |
+| r           | \<c-r\>     | recent_project_files     |
+| w           | \<c-w\>     | change_working_directory |
 
 ## API
 
@@ -210,7 +177,7 @@ Get a list of recent projects:
 local project_nvim = require("project_nvim")
 local recent_projects = project_nvim.get_recent_projects()
 
-print(vim.inspect(recent_projects))
+vim.print(recent_projects)
 ```
 
 ## 🤝 Contributing
