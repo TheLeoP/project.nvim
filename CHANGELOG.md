@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/TheLeoP/project.nvim/compare/v1.0.0...v1.1.0) (2025-11-11)
+
+
+### Features
+
+* order recent projects ([2a0e34b](https://github.com/TheLeoP/project.nvim/commit/2a0e34b3ce2db66a93fff028b67f232fe8dd1722))
+
 ## 1.0.0 (2024-07-29)
 
 
