@@ -1,4 +1,4 @@
-*project.nvim.txt*        For Neovim >= 0.8.0        Last change: 2024 July 29
+*project.nvim.txt*      For Neovim >= 0.11.0     Last change: 2025 November 11
 
 ==============================================================================
 Table of Contents                             *project.nvim-table-of-contents*
@@ -135,21 +135,21 @@ give the name:
 <
 
 To specify the root has a certain directory as an ancestor (useful for
-excluding directories), prefix it with `^`
+excluding directories), prefix it with `^`:
 
 >lua
     patterns = { "^fixtures" }
 <
 
-Tospecify the root has a certain directory as its direct ancestor / parent
+To specify the root has a certain directory as its direct ancestor / parent
 (useful when you put working projects in a common directory), prefix it with
-`>`
+`>`:
 
 >lua
     patterns = { ">Latex" }
 <
 
-Toexclude a pattern, prefix it with `!`.
+To exclude a pattern, prefix it with `!`.
 
 >lua
     patterns = { "!.git/worktrees", "!=extras", "!^fixtures", "!build/env.sh" }
