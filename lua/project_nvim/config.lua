@@ -9,7 +9,6 @@ local M = {}
 ---@field show_hidden boolean
 ---@field silent_chdir boolean
 ---@field scope_chdir  "global"|'tab'|'win'
----@field datapath string
 ---@field find_files boolean|fun(prompt_bufnr: number): boolean
 
 ---@class ProjectOptionsPartial
@@ -21,7 +20,6 @@ local M = {}
 ---@field show_hidden? boolean
 ---@field silent_chdir? boolean
 ---@field scope_chdir?  "global"|'tab'|'win'
----@field datapath? string
 ---@field find_files? boolean|fun(prompt_bufnr: number): boolean
 
 ---@type ProjectOptions
@@ -61,10 +59,6 @@ M.defaults = {
   -- * tab
   -- * win
   scope_chdir = "global",
-
-  -- Path where project.nvim will store the project history
-  datapath = vim.fn.stdpath("data") --[[@as string]],
-
   find_files = true,
 }
 
@@ -86,9 +80,6 @@ M.setup = function(options)
   ) --[=[@as string[]]=]
 
   vim.o.autochdir = false
-
-  require("project_nvim.utils.path").init()
-  require("project_nvim.project").init()
 end
 
 return M
