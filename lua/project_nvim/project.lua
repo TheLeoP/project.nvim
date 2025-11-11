@@ -5,8 +5,6 @@ local path = require("project_nvim.utils.path")
 local uv = vim.uv
 local M = {}
 
--- Internal states
-M.attached_lsp = false
 M.last_project = nil ---@type string?
 
 --- Tries to return the root of the project using LSP
@@ -131,7 +129,7 @@ function M.set_cwd(dir, method)
   if chdir[config.options.scope_chdir] == nil then return false end
 
   M.last_project = dir
-  table.insert(history.session_projects, dir)
+  history.add_project(dir)
 
   if uv.cwd() ~= dir then
     chdir[config.options.scope_chdir]()
@@ -168,43 +166,6 @@ function M.on_buf_enter()
 
   local root, method = M.get_project_root()
   M.set_cwd(root, method)
-end
-
-function M.init()
-  local group = vim.api.nvim_create_augroup("project_nvim", { clear = true })
-
-  if not config.options.manual_mode then
-    vim.api.nvim_create_autocmd({ "VimEnter", "BufEnter" }, {
-      group = group,
-      pattern = "*",
-      callback = M.on_buf_enter,
-      desc = "Change cwd to project root using patterns",
-    })
-
-    if vim.tbl_contains(config.options.detection_methods, "lsp") then
-      if M.attached_lsp then return end
-
-      vim.api.nvim_create_autocmd("LspAttach", {
-        group = group,
-        pattern = "*",
-        callback = M.on_buf_enter,
-        desc = "Change cwd to project root using LSP",
-      })
-
-      M.attached_lsp = true
-    end
-  end
-
-  vim.api.nvim_create_user_command("ProjectRoot", M.on_buf_enter, {})
-
-  vim.api.nvim_create_autocmd("VimLeavePre", {
-    group = group,
-    pattern = "*",
-    callback = history.write_projects_to_history,
-    desc = "Write project.nvim history to file before closing Neovim",
-  })
-
-  history.read_projects_from_history()
 end
 
 return M

@@ -87,9 +87,6 @@ return {
   -- * win
   scope_chdir = "global",
 
-  -- Path where project.nvim will store the project history
-  datapath = vim.fn.stdpath("data"),
-
   -- Whether or no to call find_files on project selection
   ---@type boolean|fun(prompt_bufnr: number): boolean
   find_files = true,

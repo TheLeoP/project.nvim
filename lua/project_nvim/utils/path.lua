@@ -1,25 +1,9 @@
 local config = require("project_nvim.config")
-local uv = vim.loop
+local uv = vim.uv
 local M = {}
 
-M.datapath = vim.fn.stdpath("data")
-M.projectpath = M.datapath .. "/project_nvim"
+M.projectpath = vim.fn.stdpath("data") .. "/project_nvim"
 M.historyfile = M.projectpath .. "/project_history"
-
-function M.init()
-  M.datapath = require("project_nvim.config").options.datapath
-  M.projectpath = M.datapath .. "/project_nvim"
-  M.historyfile = M.projectpath .. "/project_history"
-end
-
----@param callback? function
-function M.create_scaffolding(callback)
-  if callback ~= nil then
-    uv.fs_mkdir(M.projectpath, 448, callback)
-  else
-    uv.fs_mkdir(M.projectpath, 448)
-  end
-end
 
 ---@param dir string
 ---@return boolean
