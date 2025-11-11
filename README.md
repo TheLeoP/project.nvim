@@ -1,23 +1,15 @@
 # 🗃️ project.nvim
 
-**project.nvim** is an all in one neovim plugin written in lua that provides
-superior project management.
-
-![Telescope Integration](https://user-images.githubusercontent.com/36672196/129409509-62340f10-4dd0-4c1a-9252-8bfedf2a9945.png)
+**project.nvim** is an all in one Neovim plugin written in Lua that provides project management.
 
 ## ⚡ Requirements
 
-- Neovim >= 0.8.0
+- Neovim >= 0.11.0
 
 ## ✨ Features
 
-- Automagically cd to project directory using nvim lsp
-  - Dependency free, does not rely on lspconfig
-- If no lsp then uses pattern matching to cd to root directory
-- Telescope integration `:Telescope projects`
-  - Access your recently opened projects from telescope!
-  - Asynchronous file io so it will not slow down vim when reading the history
-    file on startup.
+- Automagically cd to project directory using LSP
+- If there's LSP, it uses pattern matching
 
 ## 📦 Installation
 
@@ -26,13 +18,12 @@ Install the plugin with your preferred package manager:
 ### [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
-Plug 'ahmedkhalf/project.nvim'
+Plug 'TheLeoP/project.nvim'
 
 lua << EOF
+  -- There's no need to call `setup` unless you want to change the default settings
   require("project_nvim").setup {
-    -- your configuration comes here
-    -- or leave it empty to use the default settings
-    -- refer to the configuration section below
+  -- ...
   }
 EOF
 ```
@@ -42,7 +33,10 @@ EOF
 ```lua
 return {
   "TheLeoP/project.nvim",
-  opts = {},
+  opts = {
+  -- There's no need to create `opts` unless you want to change the default settings
+  -- ...
+  },
 }
 ```
 
@@ -93,9 +87,6 @@ return {
 }
 ```
 
-Even if you are pleased with the defaults, please note that `setup {}` must be
-called for the plugin to start.
-
 ### Pattern Matching
 
 **project.nvim**'s pattern engine uses the same expressions as vim-rooter, but
@@ -137,47 +128,12 @@ patterns = { "!.git/worktrees", "!=extras", "!^fixtures", "!build/env.sh" }
 
 List your exclusions before the patterns you do want.
 
-### Telescope Integration
-
-To enable telescope integration:
-
-```lua
-require('telescope').load_extension('projects')
-```
-
-#### Telescope Projects Picker
-
-To use the projects picker
-
-```lua
-require'telescope'.extensions.projects.projects{}
-```
-
-#### Telescope mappings
-
-**project.nvim** comes with the following mappings:
-
-| Normal mode | Insert mode | Action                   |
-| ----------- | ----------- | ------------------------ |
-| f           | \<c-f\>     | find_project_files       |
-| b           | \<c-b\>     | browse_project_files     |
-| d           | \<c-d\>     | delete_project           |
-| s           | \<c-s\>     | search_in_project_files  |
-| r           | \<c-r\>     | recent_project_files     |
-| w           | \<c-w\>     | change_working_directory |
-
 ## API
 
 Get a list of recent projects:
 
 ```lua
-local project_nvim = require("project_nvim")
-local recent_projects = project_nvim.get_recent_projects()
+local recent_projects = require("project_nvim").get_recent_projects()
 
 vim.print(recent_projects)
 ```
-
-## 🤝 Contributing
-
-- All pull requests are welcome.
-- If you encounter bugs please open an issue.
