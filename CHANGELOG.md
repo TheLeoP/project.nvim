@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/TheLeoP/project.nvim/compare/v1.0.0...v1.1.0) (2025-11-17)
+
+
+### Features
+
+* order recent projects ([2a0e34b](https://github.com/TheLeoP/project.nvim/commit/2a0e34b3ce2db66a93fff028b67f232fe8dd1722))
+
+
+### Bug Fixes
+
+* don't override history if current session has no projects ([3e64a7f](https://github.com/TheLeoP/project.nvim/commit/3e64a7f8c8884f123fa6c9fdd2494907cf481f2c))
+
 ## 1.0.0 (2024-07-29)
 
 
