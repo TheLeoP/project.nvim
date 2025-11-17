@@ -95,9 +95,7 @@ function M.write_projects_to_history()
     if err2 then return vim.notify(err2, vim.log.levels.ERROR) end
   end
 
-  local file, err5 = uv.fs_open(path.historyfile, "w", 438)
-  if err5 then return vim.notify(err5, vim.log.levels.ERROR) end
-  ---@cast file -nil
+  if not recent_projects then return end
 
   ---@type {[string]: uv.fs_stat.result}
   local project_stats = vim
@@ -123,6 +121,9 @@ function M.write_projects_to_history()
   end)
   local out = table.concat(recent_projects, "\n")
 
+  local file, err5 = uv.fs_open(path.historyfile, "w", 438)
+  if err5 then return vim.notify(err5, vim.log.levels.ERROR) end
+  ---@cast file -nil
   local _, err3 = uv.fs_write(file, out, -1)
   if err3 then return vim.notify(err3, vim.log.levels.ERROR) end
   local _, err4 = uv.fs_close(file)
