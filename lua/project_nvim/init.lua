@@ -3,6 +3,6 @@ local history = require("project_nvim.utils.history")
 local M = {}
 
 M.setup = config.setup
-M.get_recent_projects = history.get_recent_projects
+M.get_recent = history.get_recent
 
 return M

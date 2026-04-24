@@ -2,9 +2,6 @@ local config = require("project_nvim.config")
 local uv = vim.uv
 local M = {}
 
-M.projectpath = vim.fn.stdpath("data") .. "/project_nvim"
-M.historyfile = M.projectpath .. "/project_history"
-
 ---@param dir string
 ---@return boolean
 function M.is_excluded(dir)

@@ -129,7 +129,7 @@ function M.set_cwd(dir, method)
   if chdir[config.options.scope_chdir] == nil then return false end
 
   M.last_project = dir
-  history.add_project(dir)
+  history.add(dir)
 
   if uv.cwd() ~= dir then
     chdir[config.options.scope_chdir]()

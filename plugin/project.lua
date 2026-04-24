@@ -25,11 +25,9 @@ vim.api.nvim_create_user_command("ProjectRoot", function() require("project_nvim
 vim.api.nvim_create_autocmd("VimLeavePre", {
   group = group,
   pattern = "*",
-  callback = require("project_nvim.utils.history").write_projects_to_history,
+  callback = function() require("project_nvim.utils.history").write():wait() end,
   desc = "Write project.nvim history to file before closing Neovim",
 })
 
-coroutine.wrap(function()
-  require("project_nvim.utils.history").read_projects_from_history()
-  require("project_nvim.utils.history").start_history_watcher()
-end)()
+require("project_nvim.utils.history").read_history()
+require("project_nvim.utils.history").start_history_watcher()
