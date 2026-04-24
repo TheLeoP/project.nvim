@@ -22,9 +22,9 @@ function M.delete(project)
         end
       end
     end)
+    async.await(M.write())
   end)
   task:raise_on_error()
-  M.write()
   return task
 end
 
@@ -35,9 +35,9 @@ function M.add(project)
     history_semaphore:with(function()
       if path.exists(project) and not path.is_excluded(project) then table.insert(recent_projects, 1, project) end
     end)
+    async.await(M.write())
   end)
   task:raise_on_error()
-  M.write()
 end
 
 local a_fs_stat = async.wrap(2, uv.fs_stat)
