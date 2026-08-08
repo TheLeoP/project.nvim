@@ -40,22 +40,27 @@ function M.add(project)
   task:raise_on_error()
 end
 
+---@type fun(path: string): err: string|nil, stat: uv.fs_stat.result|nil
 local a_fs_stat = async.wrap(2, uv.fs_stat)
+---@type fun(path: string, mode: integer): err: string|nil, success: boolean|nil
 local a_fs_mkdir = async.wrap(3, uv.fs_mkdir)
+---@type fun(path: string, flags: string|integer, mode: integer): err: string|nil, fd: integer|nil
 local a_fs_open = async.wrap(4, uv.fs_open)
+---@type fun(fd: integer): err: string|nil, stat: uv.fs_stat.result|nil
 local a_fs_fstat = async.wrap(2, uv.fs_fstat)
+---@type fun(fd: integer, size: integer, offset?: integer): err: string|nil, data: string|nil
 local a_fs_read = async.wrap(4, uv.fs_read)
+---@type fun(fd: integer): err: string|nil, success: boolean|nil
 local a_fs_close = async.wrap(2, uv.fs_close)
+---@type fun(fd: integer, data: string|string[], offset?: integer): err: string|nil, bytes: integer|nil
 local a_fs_write = async.wrap(4, uv.fs_write)
 
 function M.read_history()
   local task = async.run(function()
     history_semaphore:with(function()
-      local err, dir_stat = a_fs_stat(project_path)
-      if err then return vim.notify(err, vim.log.levels.ERROR) end
-      ---@cast dir_stat -nil
-
-      if not dir_stat then
+      local err = a_fs_stat(project_path)
+      if err and not err:match("^ENOENT:") then return vim.notify(err, vim.log.levels.ERROR) end
+      if err and err:match("^ENOENT:") then
         local err2 = a_fs_mkdir(project_path, tonumber("700", 8))
         if err2 then return vim.notify(err2, vim.log.levels.ERROR) end
       end
@@ -95,10 +100,10 @@ end
 function M.write()
   local task = async.run(function()
     history_semaphore:with(function()
-      local err, dir_stat = a_fs_stat(project_path)
-      if err then return vim.notify(err, vim.log.levels.ERROR) end
-      if not dir_stat then
-        local err2 = a_fs_mkdir(project_path, tonumber("700", 8)) ---@type string|nil
+      local err = a_fs_stat(project_path)
+      if err and not err:match("^ENOENT:") then return vim.notify(err, vim.log.levels.ERROR) end
+      if err and err:match("^ENOENT:") then
+        local err2 = a_fs_mkdir(project_path, tonumber("700", 8))
         if err2 then return vim.notify(err2, vim.log.levels.ERROR) end
       end
 
