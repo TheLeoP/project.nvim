@@ -1,6 +1,5 @@
-local path = require("project_nvim.utils.path")
 local uv = vim.uv
-local async = require("async")
+local async = vim.async or require("async")
 
 local M = {}
 
@@ -10,6 +9,26 @@ local history_file = project_path .. "/project_history"
 ---@type string[]
 local recent_projects = {}
 local history_semaphore = async.semaphore(1)
+
+---@param path string
+---@return boolean
+local function path_exists(path) return vim.uv.fs_stat(path) ~= nil end
+
+---@param dir string
+---@return boolean
+local function dir_exists(dir)
+  local stat = uv.fs_stat(dir)
+  return stat ~= nil and stat.type == "directory"
+end
+
+---@param path string
+---@return string
+local function path_normalize(path)
+  path = vim.fs.normalize(path)
+  path = path:gsub([[\]], "/")
+  if vim.fn.has("win32") == 1 then path = path:sub(1, 1):upper() .. path:sub(2):lower() end
+  return path
+end
 
 ---@param project string
 function M.delete(project)
@@ -33,7 +52,7 @@ function M.add(project)
   local task = async.run(function()
     if vim.list_contains(recent_projects, project) then async.await(M.delete(project)) end
     history_semaphore:with(function()
-      if path.exists(project) and not path.is_excluded(project) then table.insert(recent_projects, 1, project) end
+      if path_exists(project) then table.insert(recent_projects, 1, project) end
     end)
     async.await(M.write())
   end)
@@ -82,8 +101,8 @@ function M.read_history()
 
       recent_projects = vim
         .iter(vim.gsplit(data, "[\r\n]+", { trimempty = true }))
-        :filter(function(p) return not path.is_excluded(p) and path.dir_exists(p) end)
-        :map(path.normalize)
+        :filter(function(p) return dir_exists(p) end)
+        :map(path_normalize)
         :unique()
         :totable()
     end)

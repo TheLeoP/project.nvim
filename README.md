@@ -1,139 +1,48 @@
-# 🗃️ project.nvim
+# project.nvim
 
-**project.nvim** is an all in one Neovim plugin written in Lua that provides project management.
+**project.nvim** is a Neovim plugin that provides project management.
 
-## ⚡ Requirements
+## Requirements
 
 - Neovim >= 0.11.0
 
-## ✨ Features
+## Features
 
-- Automagically cd to project directory using LSP
-- If there's LSP, it uses pattern matching
+- Automatically persist "projects" (cwd's)
+- Manage (add/delete) "projects"
 
-## 📦 Installation
+## Installation
 
-Install the plugin with your preferred package manager:
+Install the plugin with your favorite package manager:
+
+### `vim.pack`
+
+```lua
+vim.pack.add({'https://github.com/TheLeoP/project.nvim'})
+```
 
 ### [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```vim
 Plug 'TheLeoP/project.nvim'
-
-lua << EOF
-  -- There's no need to call `setup` unless you want to change the default settings
-  require("project_nvim").setup {
-  -- ...
-  }
-EOF
 ```
-
-### [packer](https://github.com/wbthomason/packer.nvim)
-
-```lua
-return {
-  "TheLeoP/project.nvim",
-  opts = {
-  -- There's no need to create `opts` unless you want to change the default settings
-  -- ...
-  },
-}
-```
-
-## ⚙️ Configuration
-
-**project.nvim** comes with the following defaults:
-
-```lua
-{
-  -- Manual mode doesn't automatically change your root directory, so you have
-  -- the option to manually do so using `:ProjectRoot` command.
-  manual_mode = false,
-
-  -- Methods of detecting the root directory. **"lsp"** uses the native neovim
-  -- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
-  -- order matters: if one is not detected, the other is used as fallback. You
-  -- can also delete or rearrange the detection methods.
-  detection_methods = { "lsp", "pattern" },
-
-  -- All the patterns used to detect root dir, when **"pattern"** is in
-  -- detection_methods
-  patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json" },
-
-  -- Table of lsp clients to ignore by name
-  -- eg: { "efm", ... }
-  ignore_lsp = {},
-
-  -- Don't calculate root dir on specific directories
-  -- Ex: { "~/.cargo/*", ... }
-  exclude_dirs = {},
-
-  -- Show hidden files in telescope
-  show_hidden = false,
-
-  -- When set to false, you will get a message when project.nvim changes your
-  -- directory.
-  silent_chdir = true,
-
-  -- What scope to change the directory, valid options are
-  -- * global (default)
-  -- * tab
-  -- * win
-  scope_chdir = "global",
-
-  -- Whether or no to call find_files on project selection
-  ---@type boolean|fun(prompt_bufnr: number): boolean
-  find_files = true,
-}
-```
-
-### Pattern Matching
-
-**project.nvim**'s pattern engine uses the same expressions as vim-rooter, but
-for your convenience, I will copy paste them here:
-
-To specify the root is a certain directory, prefix it with `=`.
-
-```lua
-patterns = { "=src" }
-```
-
-To specify the root has a certain directory or file (which may be a glob), just
-give the name:
-
-```lua
-patterns = { ".git", "Makefile", "*.sln", "build/env.sh" }
-```
-
-To specify the root has a certain directory as an ancestor (useful for
-excluding directories), prefix it with `^`:
-
-```lua
-patterns = { "^fixtures" }
-```
-
-To specify the root has a certain directory as its direct ancestor / parent
-(useful when you put working projects in a common directory), prefix it with
-`>`:
-
-```lua
-patterns = { ">Latex" }
-```
-
-To exclude a pattern, prefix it with `!`.
-
-```lua
-patterns = { "!.git/worktrees", "!=extras", "!^fixtures", "!build/env.sh" }
-```
-
-List your exclusions before the patterns you do want.
 
 ## API
 
 Get a list of recent projects:
 
 ```lua
-local recent_projects = require("project_nvim").get_recent_projects()
+require("project").get_recent()
+```
 
-vim.print(recent_projects)
+Add a project
+
+```lua
+require("project").add()
+```
+
+Delete a project
+
+```lua
+require("project").delete()
 ```
