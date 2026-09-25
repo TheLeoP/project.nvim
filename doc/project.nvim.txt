@@ -1,5 +1,5 @@
 *project.nvim.txt*
-                             For NVIM v0.8.0    Last change: 2026 September 24
+                             For NVIM v0.8.0    Last change: 2026 September 25
 
 ==============================================================================
 Table of Contents                             *project.nvim-table-of-contents*
