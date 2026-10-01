@@ -15,5 +15,13 @@ vim.api.nvim_create_autocmd("DirChanged", {
   end,
 })
 
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = group,
+  callback = function()
+    local cwd = vim.fn.getcwd()
+    require("project").add(cwd)
+  end,
+})
+
 require("project").read_history()
 require("project").start_history_watcher()
